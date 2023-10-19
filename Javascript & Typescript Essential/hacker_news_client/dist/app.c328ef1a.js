@@ -123,27 +123,25 @@ var ajax = new XMLHttpRequest(); //상수 변하지 않음
 var content = document.createElement("div");
 var NEWS_URL = "https://api.hnpwa.com/v0/news/1.json";
 var CONTENT_URL = "https://api.hnpwa.com/v0/item/@id.json";
-ajax.open("GET", NEWS_URL, false);
-ajax.send();
-var newsFeed = JSON.parse(ajax.response);
+function getData(url) {
+  ajax.open("GET", url, false);
+  ajax.send();
+  return JSON.parse(ajax.response);
+}
+var newsFeed = getData(NEWS_URL);
 var ul = document.createElement("ul");
 window.addEventListener("hashchange", function (event) {
   var id = location.hash.substr(1);
-  ajax.open("GET", CONTENT_URL.replace("@id", id), false);
-  ajax.send();
-  var newsContent = JSON.parse(ajax.response);
+  var newsContent = getData(CONTENT_URL.replace("@id", id));
   var title = document.createElement("h1");
   title.innerHTML = newsContent.title;
   content.appendChild(title);
   console.log(newsContent);
 });
 for (var i = 0; i < 10; i++) {
-  var li = document.createElement("li");
-  var a = document.createElement("a");
-  a.href = "#".concat(newsFeed[i].id);
-  a.innerHTML = "".concat(newsFeed[i].title, " (").concat(newsFeed[i].comments_count, ")");
-  li.appendChild(a);
-  ul.appendChild(li);
+  var div = document.createElement("div");
+  div.innerHTML = "\n    <li>\n      <a href=\"#".concat(newsFeed[i].id, "\">\n        ").concat(newsFeed[i].title, " (").concat(newsFeed[i].comments_count, ")\n      </a>\n    </li>\n  ");
+  ul.appendChild(div.firstElementChild);
 }
 container.appendChild(ul);
 container.appendChild(content);
@@ -172,7 +170,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "62610" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56759" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];
