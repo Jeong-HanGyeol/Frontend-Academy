@@ -279,15 +279,27 @@ exports.NewsDetailApi = exports.NewsFeedApi = exports.Api = void 0;
 var Api = /*#__PURE__*/function () {
   function Api(url) {
     _classCallCheck(this, Api);
-    this.ajax = new XMLHttpRequest();
+    this.xhr = new XMLHttpRequest();
     this.url = url;
   }
   _createClass(Api, [{
-    key: "getRequest",
-    value: function getRequest() {
-      this.ajax.open("GET", this.url, false);
-      this.ajax.send();
-      return JSON.parse(this.ajax.response);
+    key: "getRequestWithXHR",
+    value: function getRequestWithXHR(cb) {
+      var _this = this;
+      this.xhr.open("GET", this.url);
+      this.xhr.addEventListener("load", function () {
+        cb(JSON.parse(_this.xhr.response));
+      });
+      this.xhr.send();
+    }
+  }, {
+    key: "getRequestWithPromise",
+    value: function getRequestWithPromise(cb) {
+      fetch(this.url).then(function (response) {
+        return response.json();
+      }).then(cb).catch(function () {
+        console.error("데이터를 불러오지 못했습니다.");
+      });
     }
   }]);
   return Api;
@@ -301,9 +313,14 @@ var NewsFeedApi = /*#__PURE__*/function (_Api) {
     return _super.apply(this, arguments);
   }
   _createClass(NewsFeedApi, [{
-    key: "getData",
-    value: function getData() {
-      return this.getRequest();
+    key: "getDataWithXHR",
+    value: function getDataWithXHR(cb) {
+      return this.getRequestWithXHR(cb);
+    }
+  }, {
+    key: "getDataWithPromise",
+    value: function getDataWithPromise(cb) {
+      return this.getRequestWithPromise(cb);
     }
   }]);
   return NewsFeedApi;
@@ -317,9 +334,14 @@ var NewsDetailApi = /*#__PURE__*/function (_Api2) {
     return _super2.apply(this, arguments);
   }
   _createClass(NewsDetailApi, [{
-    key: "getData",
-    value: function getData() {
-      return this.getRequest();
+    key: "getDataWithXHR",
+    value: function getDataWithXHR(cb) {
+      return this.getRequestWithXHR(cb);
+    }
+  }, {
+    key: "getDataWithPromise",
+    value: function getDataWithPromise(cb) {
+      return this.getRequestWithPromise(cb);
     }
   }]);
   return NewsDetailApi;
@@ -371,16 +393,17 @@ var NewsDetailView = /*#__PURE__*/function (_view_1$default) {
     _this = _super.call(this, containerId, template);
     _this.render = function (id) {
       var api = new api_1.NewsDetailApi(config_1.CONTENT_URL.replace("@id", id));
-      var _api$getData = api.getData(),
-        title = _api$getData.title,
-        content = _api$getData.content,
-        comments = _api$getData.comments;
-      _this.store.makeRead(Number(id));
-      _this.setTemplateData("currentPage", _this.store.currentPage.toString());
-      _this.setTemplateData("title", title);
-      _this.setTemplateData("content", content);
-      _this.setTemplateData("comments", _this.makeComment(comments));
-      _this.updateView();
+      api.getDataWithPromise(function (data) {
+        var title = data.title,
+          content = data.content,
+          comments = data.comments;
+        _this.store.makeRead(Number(id));
+        _this.setTemplateData("currentPage", _this.store.currentPage.toString());
+        _this.setTemplateData("title", title);
+        _this.setTemplateData("content", content);
+        _this.setTemplateData("comments", _this.makeComment(comments));
+        _this.updateView();
+      });
     };
     _this.store = store;
     return _this;
@@ -439,6 +462,15 @@ var NewsFeedView = /*#__PURE__*/function (_view_1$default) {
     _this.render = function () {
       var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "1";
       _this.store.currentPage = Number(page);
+      if (!_this.store.hasFeeds) {
+        _this.api.getDataWithPromise(function (feeds) {
+          _this.store.setFeeds(feeds);
+          _this.renderView();
+        });
+      }
+      _this.renderView();
+    };
+    _this.renderView = function () {
       for (var i = (_this.store.currentPage - 1) * 10; i < _this.store.currentPage * 10; i++) {
         var _this$store$getFeed = _this.store.getFeed(i),
           id = _this$store$getFeed.id,
@@ -457,9 +489,6 @@ var NewsFeedView = /*#__PURE__*/function (_view_1$default) {
     };
     _this.store = store;
     _this.api = new api_1.NewsFeedApi(config_1.NEWS_URL);
-    if (!_this.store.hasFeeds) {
-      _this.store.setFeeds(_this.api.getData());
-    }
     return _this;
   }
   return _createClass(NewsFeedView);
@@ -617,7 +646,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54694" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61614" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];
