@@ -1,0 +1,11 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "parcel webapp",
+      "type": "shell",
+      "command": "parcel index.html",
+      "isBackground": true
+    }
+  ]
+}
